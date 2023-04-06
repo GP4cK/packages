@@ -126,10 +126,20 @@ class GoRouterDelegate extends RouterDelegate<RouteMatchList>
   }
 
   /// Pops the top-most route.
-  void pop<T extends Object?>([T? result]) {
+  Future<void> pop<T extends Object?>([T? result]) async {
     final _NavigatorStateIterator iterator = _createNavigatorStateIterator();
     while (iterator.moveNext()) {
       if (iterator.current.canPop()) {
+        late final bool shouldPop;
+        if (iterator.matchList.last.route.onExit == null) {
+          shouldPop = true;
+        } else {
+          shouldPop = await iterator
+              .matchList.last.route.onExit!(navigatorKey.currentContext!);
+        }
+        if (shouldPop == false) {
+          return;
+        }
         iterator.current.pop<T>(result);
         return;
       }
